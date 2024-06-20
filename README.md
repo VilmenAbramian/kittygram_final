@@ -1,26 +1,127 @@
-#  Как работать с репозиторием финального задания
+#  Kittygram — социальная сеть для обмена фотографиями любимых питомцев
 
-## Что нужно сделать
+## Описание проекта
 
-Настроить запуск проекта Kittygram в контейнерах и CI/CD с помощью GitHub Actions
+В сервисе Kittygram пользователи могут регестрировать аккаунты, загружать фотографии любимых животных с описанием, а также указывать цвет и 'достижения' своего любимца.
 
-## Как проверить работу с помощью автотестов
+### Установка
+<i>Примечание: Все примеры указаны для Linux</i><br>
+1. Склонируйте репозиторий на свой компьютер:
+    ```
+    git clone git@github.com:VilmenAbramian/kittygram_final.git
+    ```
+2. Создайте файл `.env` и заполните его своими данными. Все необходимые переменные перечислены в файле `.env.example`, находящемся в корневой директории проекта.
 
-В корне репозитория создайте файл tests.yml со следующим содержимым:
-```yaml
-repo_owner: ваш_логин_на_гитхабе
-kittygram_domain: полная ссылка (https://доменное_имя) на ваш проект Kittygram
-taski_domain: полная ссылка (https://доменное_имя) на ваш проект Taski
-dockerhub_username: ваш_логин_на_докерхабе
-```
+### Создание Docker-образов
 
-Скопируйте содержимое файла `.github/workflows/main.yml` в файл `kittygram_workflow.yml` в корневой директории проекта.
+1. Замените `YOUR_USERNAME` на свой логин на DockerHub:
 
-Для локального запуска тестов создайте виртуальное окружение, установите в него зависимости из backend/requirements.txt и запустите в корневой директории проекта `pytest`.
+    ```
+    cd frontend
+    docker build -t YOUR_USERNAME/kittygram_frontend .
+    cd ../backend
+    docker build -t YOUR_USERNAME/kittygram_backend .
+    cd ../nginx
+    docker build -t YOUR_USERNAME/kittygram_gateway . 
+    ```
 
-## Чек-лист для проверки перед отправкой задания
+2. Загрузите образы на DockerHub:
 
-- Проект Taski доступен по доменному имени, указанному в `tests.yml`.
-- Проект Kittygram доступен по доменному имени, указанному в `tests.yml`.
-- Пуш в ветку main запускает тестирование и деплой Kittygram, а после успешного деплоя вам приходит сообщение в телеграм.
-- В корне проекта есть файл `kittygram_workflow.yml`.
+    ```
+    docker push YOUR_USERNAME/kittygram_frontend
+    docker push YOUR_USERNAME/kittygram_backend
+    docker push YOUR_USERNAME/kittygram_gateway
+    ```
+
+### Деплой на сервере
+
+1. Подключитесь к удаленному серверу
+
+    ```
+    ssh -i PATH_TO_SSH_KEY/SSH_KEY_NAME YOUR_USERNAME@SERVER_IP_ADDRESS 
+    ```
+
+2. Создайте на сервере директорию `kittygram`:
+
+    ```
+    mkdir kittygram
+    ```
+
+3. Установите Docker Compose на сервер:
+
+    ```
+    sudo apt update
+    sudo apt install curl
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    sudo apt install docker-compose
+    ```
+
+4. Скопируйте файлы `docker-compose.production.yml` и `.env` в директорию `kittygram/` на сервере:
+
+    ```
+    scp -i PATH_TO_SSH_KEY/SSH_KEY_NAME docker-compose.production.yml YOUR_USERNAME@SERVER_IP_ADDRESS:/home/YOUR_USERNAME/kittygram/docker-compose.production.yml
+    ```
+    
+    Где:
+    - `PATH_TO_SSH_KEY` - путь к файлу с вашим SSH-ключом
+    - `SSH_KEY_NAME` - имя файла с вашим SSH-ключом
+    - `YOUR_USERNAME` - ваше имя пользователя на сервере
+    - `SERVER_IP_ADDRESS` - IP-адрес вашего сервера
+
+5. Запустите Docker Compose в режиме демона:
+
+    ```
+    sudo docker-compose -f /home/YOUR_USERNAME/kittygram/docker-compose.production.yml up -d
+    ```
+
+6. Выполните миграции, соберите статические файлы бэкенда и скопируйте их в `/backend_static/static/`:
+
+    ```
+    sudo docker-compose -f /home/YOUR_USERNAME/kittygram/docker-compose.production.yml exec backend python manage.py migrate
+    sudo docker-compose -f /home/YOUR_USERNAME/kittygram/docker-compose.production.yml exec backend python manage.py collectstatic
+    sudo docker-compose -f /home/YOUR_USERNAME/kittygram/docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
+    ```
+
+7. Откройте конфигурационный файл Nginx в редакторе nano:
+
+    ```
+    sudo nano /etc/nginx/sites-enabled/default
+    ```
+
+8. Измените настройки `location` в секции `server`:
+
+    ```
+    location / {
+        proxy_set_header Host $http_host;
+        proxy_pass http://127.0.0.1:9000;
+    }
+    ```
+
+9. Проверьте правильность конфигурации Nginx:
+
+    ```
+    sudo nginx -t
+    ```
+
+    Если вы получаете следующий ответ, значит, ошибок нет:
+
+    ```
+    nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+    nginx: configuration file /etc/nginx/nginx.conf test is successful
+    ```
+
+10. Перезапустите Nginx:
+
+    ```
+    sudo service nginx reload
+    ```
+
+### Технологии
+Python 3.11.1,
+Django 3.2.3,
+djangorestframework==3.12.4, 
+PostgreSQL 13.10
+
+### Автор
+[Vilmen Abramian](https://github.com/VilmenAbramian)
