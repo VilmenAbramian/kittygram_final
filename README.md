@@ -1,4 +1,5 @@
 #  Kittygram — социальная сеть для обмена фотографиями любимых питомцев
+![example workflow](https://github.com/VilmenAbramian/kittygram_final/actions/workflows/main.yml/badge.svg)
 
 ## Описание проекта
 
