@@ -12,7 +12,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', default='token')
 
 DEBUG = bool(os.getenv('DEBUG', ''))
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1, localhost').split(',')
+# ALLOWED_HOSTS = ['158.160.21.253', '127.0.0.1', 'localhost', 'kittigram.shop']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
