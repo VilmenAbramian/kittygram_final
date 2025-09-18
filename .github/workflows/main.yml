@@ -137,7 +137,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+#        passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docker-compose.production.yml"
         target: "kittygram"
     - name: Executing remote ssh commands to deploy
@@ -146,7 +146,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+#        passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
           cd kittygram
           sudo docker compose -f docker-compose.production.yml pull
@@ -156,13 +156,13 @@ jobs:
           sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
           sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static/
 
-  send_message:
-    runs-on: ubuntu-latest
-    needs: deploy
-    steps:
-    - name: Send message
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: Деплой успешно выполнен!
+#  send_message:
+#    runs-on: ubuntu-latest
+#    needs: deploy
+#    steps:
+#    - name: Send message
+#      uses: appleboy/telegram-action@master
+#      with:
+#        to: ${{ secrets.TELEGRAM_TO }}
+#        token: ${{ secrets.TELEGRAM_TOKEN }}
+#        message: Деплой успешно выполнен!
